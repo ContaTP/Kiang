@@ -6,7 +6,7 @@ class KiangGroupBox(QtWidgets.QGroupBox):
 
     def __init__(self, cursor = QtCore.Qt.PointingHandCursor,
                  font = QtGui.QFont("Glacial Indifference", 10),
-                 backgroundColor = "transparent", fontColor = "#5a5e5a") 
+                 backgroundColor = "transparent", fontColor = "#5a5e5a"): 
 
         QtWidgets.QGroupBox.__init__(self, parent)
         self.setStyleSheet("QGroupBox{border: none; background: %s; color: %s}" %(backgroundColor, fontColor))

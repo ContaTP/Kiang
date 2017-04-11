@@ -1,5 +1,5 @@
 """
-Kiang --- A PyQt project to provide convienent access to data manipulation and plot
+Kiang --- A PyQt project to provide convenient access to data manipulation and plot
 """
 # PyQt5
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -12,6 +12,7 @@ import pandas as pd
 from io import StringIO
 
 # Import widgets/function from other class
+from widgets.Button import KiangPushButton, KiangRadioButton, KiangToolButton
 from widgets.ButtonGroup import KiangButtonGroup
 from widgets.Frame import KiangFrame
 from widgets.Label import KiangLabel
@@ -20,12 +21,10 @@ from widgets.LineEdit import KiangLineEdit
 from widgets.ListWidget import KiangListWidget
 from widgets.MainWindow import KiangMainWindow
 from widgets.Messager import KiangMessager
-from widgets.PushButton import KiangPushButton
 from widgets.Splitter import KiangSplitter
 from widgets.StackedWidget import KiangStackedWidget
 from widgets.TextEdit import KiangTextEdit
 from widgets.ToolBox import KiangToolBox
-from widgets.ToolButton import KiangToolButton
 
 # Import each module
 
@@ -47,8 +46,9 @@ class KiangWindow(KiangMainWindow):
           super(KiangWindow, self).setCentralWidgetLayout(self.main_layout)
 
           """Widget"""
-          # Menu and mainContent
-          self.mainMenu_widget = KiangMenuWidget()
+          # Menu
+          self.mainMenu_widget = KiangMenu()
+          # Main content
           self.mainContent_stackedWidget = KiangStackedWidget()
           # Children in stackedWidget
           self.dataLoad_widget = DataLoad()
@@ -65,9 +65,9 @@ class KiangWindow(KiangMainWindow):
 
 
 # Menu
-class KiangMenuWidget(KiangFrame):
+class KiangMenu(KiangFrame):
 
-     # Signal
+     # Signal of menu index changed, control the change of the interface
      indexChanged = QtCore.pyqtSignal(int)
      def __init__(self, parent = None):
 
@@ -75,40 +75,40 @@ class KiangMenuWidget(KiangFrame):
 
           """Layout"""
           # Layout
-          self.easyPlotMenu_layout = KiangBoxLayout(0, [0, 0, 0, 0], 0)
+          self.KiangMenu_layout = KiangBoxLayout(0, [0, 0, 0, 0], 0)
           
           """Widget"""
           # Button group
-          self.easyPlot_buttonGroup = KiangButtonGroup()
+          self.KiangMenu_buttonGroup = KiangButtonGroup()
           # Menu button
-          self.fileLoad_button = KiangToolButton.menuToolButton("DATA", qta.icon("fa.cube", disabled = "fa.cubes",  color = "#ffffff", color_disabled ="#d82d54"))
-          self.fileWarehouse_button = KiangToolButton.menuToolButton("WAREHOUSE", qta.icon("fa.database", disabled = "fa.database",  color = "#ffffff", color_disabled ="#d82d54"))
+          self.dataLoad_button = KiangToolButton.menuToolButton("DATA", qta.icon("fa.cube", disabled = "fa.cubes",  color = "#ffffff", color_disabled ="#d82d54"))
+          self.dataWarehouse_button = KiangToolButton.menuToolButton("WAREHOUSE", qta.icon("fa.database", disabled = "fa.database",  color = "#ffffff", color_disabled ="#d82d54"))
           self.graphMake_button = KiangToolButton.menuToolButton("GRAPH", qta.icon("fa.area-chart", color = "#ffffff", color_disabled ="#d82d54"))
           self.setting_button = KiangToolButton.menuToolButton("SETTING", qta.icon("fa.gear", disabled = "fa.gears", color = "#ffffff", color_disabled ="#d82d54"))
           # Add widget to button group
-          self.easyPlot_buttonGroup.addButton([self.fileLoad_button, self.fileWarehouse_button, self.graphMake_button, self.setting_button])
+          self.KiangMenu_buttonGroup.addButton([self.dataLoad_button, self.dataWarehouse_button, self.graphMake_button, self.setting_button])
           # Add widget
-          self.easyPlotMenu_layout.addWidget([self.fileLoad_button, self.fileWarehouse_button, self.graphMake_button, self.setting_button])
+          self.KiangMenu_layout.addWidget([self.dataLoad_button, self.dataWarehouse_button, self.graphMake_button, self.setting_button])
           # Set layout
-          self.setLayout(self.easyPlotMenu_layout)
+          self.setLayout(self.KiangMenu_layout)
           
           """Signal"""
-          self.fileLoad_button.clicked.connect(self.__buttonClicked)
-          self.fileWarehouse_button.clicked.connect(self.__buttonClicked)
+          self.dataLoad_button.clicked.connect(self.__buttonClicked)
+          self.dataWarehouse_button.clicked.connect(self.__buttonClicked)
           self.graphMake_button.clicked.connect(self.__buttonClicked)
           self.setting_button.clicked.connect(self.__buttonClicked)
 
      # Button clicked event
      """
-     If a menu tab is clicked, disable the menu tab
+     When a menu tab is clicked, disable the clicked menu tab
      """
      def __buttonClicked(self):
 
-          buttons = self.easyPlot_buttonGroup.buttons()
-          index = self.easyPlot_buttonGroup.checkedId()
+          buttons = self.KiangMenu_buttonGroup.buttons()
+          index = self.KiangMenu_buttonGroup.checkedId()
           for button in buttons:
 
-               button.setDisabled(True) if self.easyPlot_buttonGroup.id(button) == index else button.setDisabled(False)
+               button.setDisabled(True) if self.KiangMenu_buttonGroup.id(button) == index else button.setDisabled(False)
 
           self.indexChanged.emit(index)
 
@@ -161,6 +161,7 @@ class DataLoadPasteMethod(KiangFrame):
           super(DataLoadPasteMethod, self).__init__()
 
           """Layout"""
+          # This is the layout of the load/paste interface
           self.dataLoadPaste_layout = KiangGridLayout(0)
 
           """Main Widget"""
@@ -185,25 +186,18 @@ class DataLoadPasteMethod(KiangFrame):
           # Delimiter
           self.dataLoadPasteDataDelimiter_label = KiangLabel("Delimiter")
           # Groupbox for delimiter
-          self.dataLoadPasteDataDelimiter_groupBox =  KiangGroupBox()
+          self.dataLoadPasteDelimiter_groupBox =  KiangGroupBox()
           # Groupbox layout
-          self.dataLoadPasteDataDelimiter_groupBoxLayout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
-          
+          self.dataLoadPasteDelimiterGroupBox_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
           # Button group for delimiter
           self.dataLoadPasteDataDelimiter_buttonGroup = KiangButtonGroup()
           # Each button
-          self.fileLoadPasteDataDelimiter_commaRadioButton = QtWidgets.QRadioButton("Comma")
-          self.fileLoadPasteDataDelimiter_commaRadioButton.setChecked(True)
-          self.fileLoadPasteDataDelimiter_semicolonRadioButton = QtWidgets.QRadioButton("Semicolon")
-          self.fileLoadPasteDataDelimiter_spaceRadioButton = QtWidgets.QRadioButton("Space")
-          self.fileLoadPasteDataDelimiter_tabRadioButton = QtWidgets.QRadioButton("Tab")
-          # Set font
-          self.fileLoadPasteDataDelimiter_commaRadioButton.setFont(font)
-          self.fileLoadPasteDataDelimiter_semicolonRadioButton.setFont(font)
-          self.fileLoadPasteDataDelimiter_spaceRadioButton.setFont(font)
-          self.fileLoadPasteDataDelimiter_tabRadioButton.setFont(font)
+          self.dataLoadPasteDataDelimiter_commaRadioButton = KiangRadioButton("Comma", checked = True)
+          self.dataLoadPasteDataDelimiter_semicolonRadioButton = KiangRadioButton("Semicolon")
+          self.dataLoadPasteDataDelimiter_spaceRadioButton = KiangRadioButton("Space")
+          self.dataLoadPasteDataDelimiter_tabRadioButton = KiangRadioButton("Tab")
           # Add button to groupbox and  buttongroup
-          self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_commaRadioButton, 1)
+          self.dataLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_commaRadioButton, 1)
           self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_semicolonRadioButton, 1)
           self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_spaceRadioButton, 1)
           self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_tabRadioButton, 1)
@@ -211,6 +205,7 @@ class DataLoadPasteMethod(KiangFrame):
           self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_semicolonRadioButton, 1)
           self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_spaceRadioButton, 2)
           self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_tabRadioButton, 3)
+          
           # Set layout to button group
           self.fileLoadPasteDataDelimiter_groupBox.setLayout(self.fileLoadPasteDataDelimiter_groupBoxLayout)
           # Statistics

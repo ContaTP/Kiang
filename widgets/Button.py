@@ -1,5 +1,5 @@
 """
-Re-write all button widgets in Qt
+Re-write all button/buttonGroup widgets in Qt
 """
 # PyQt5
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -27,6 +27,7 @@ class KiangPushButton(QtWidgets.QPushButton):
             self.setIcon(icon)
 
 
+
 # RadioButton
 class KiangRadioButton(QtWidgets.QRadioButton):
     
@@ -49,6 +50,7 @@ class KiangRadioButton(QtWidgets.QRadioButton):
         if icon:
             
             self.setIcon(icon)
+
 
 
 # ToolButton
@@ -88,3 +90,20 @@ class KiangToolButton(QtWidgets.QToolButton):
 
         return cls(font = font, text = text, icon = icon)
         
+
+
+# Button Group
+class KiangButtonGroup(QtWidgets.QButtonGroup):
+
+    def __init__(self, exclusived = True, parent = None):
+
+        QtWidgets.QButtonGroup.__init__(self, parent)
+        # Set exclusive
+        self.setExclusive(exclusived)
+
+    # Rewrite the add button method to allow add a list
+    def addButton(self, buttonList):
+
+        for index, button in enumerate(buttonList):
+
+            super(KiangButtonGroup, self).addButton(button, index)

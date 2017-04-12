@@ -12,8 +12,7 @@ import pandas as pd
 from io import StringIO
 
 # Import widgets/function from other class
-from widgets.Button import KiangPushButton, KiangRadioButton, KiangToolButton
-from widgets.ButtonGroup import KiangButtonGroup
+from widgets.Button import KiangPushButton, KiangRadioButton, KiangToolButton, KiangButtonGroup
 from widgets.Frame import KiangFrame
 from widgets.Label import KiangLabel
 from widgets.Layout import KiangBoxLayout, KiangGridLayout
@@ -27,8 +26,6 @@ from widgets.TextEdit import KiangTextEdit
 from widgets.ToolBox import KiangToolBox
 
 # Import each module
-
-
 from Animation import TransitionWidget
 
 
@@ -36,81 +33,75 @@ from Animation import TransitionWidget
 # Main application window
 class KiangWindow(KiangMainWindow):
 
-     def __init__(self, parent = None):
+    def __init__(self, parent = None):
 
-          # Init from KiangMainWindow
-          super(KiangWindow, self).__init__()
-          
-          """Layout"""
-          self.main_layout =  KiangBoxLayout(2, [0, 0, 0, 0], 10)
-          super(KiangWindow, self).setCentralWidgetLayout(self.main_layout)
+        # Init from KiangMainWindow
+        super(KiangWindow, self).__init__()
+        
+        """Layout"""
+        self.main_layout =  KiangBoxLayout(2, [0, 0, 0, 0], 10)
+        super(KiangWindow, self).setCentralWidgetLayout(self.main_layout)
+        
+        
+        """Widget"""
+        # Menu
+        self.mainMenu_widget = KiangFrame()
+        self.mainMenu_buttonGroup = KiangButtonGroup()
+        # Menu layout
+        self.mainMenu_layout = KiangBoxLayout(0, [0, 0, 0, 0], 0)        
+        # Menu button
+        self.import_button = KiangToolButton.menuToolButton("DATA", qta.icon("fa.cube", color = "#ffffff", 
+                                                                             color_disabled ="#d82d54", disabled = "fa.cubes"))
+        self.view_button = KiangToolButton.menuToolButton("WAREHOUSE", qta.icon("fa.database", color = "#ffffff", 
+                                                                                color_disabled ="#d82d54", disabled = "fa.database"))
+        self.plot_button = KiangToolButton.menuToolButton("GRAPH", qta.icon("fa.area-chart", color = "#ffffff", 
+                                                                            color_disabled ="#d82d54", disabled = "fa.area-chart"))
+        self.setting_button = KiangToolButton.menuToolButton("SETTING", qta.icon("fa.gear", color = "#ffffff", 
+                                                                                 color_disabled ="#d82d54", disabled = "fa.gears"))
+        # Add menu button to menu buttonGroup
+        self.mainMenu_buttonGroup.addButton([self.import_button, self.view_button, 
+                                            self.plot_button, self.setting_button])
+        # Add widget to menu layout
+        self.mainMenu_layout.addWidget([self.dataLoad_button, self.dataWarehouse_button, 
+                                        self.graphMake_button, self.setting_button])
+        # Set layout
+        self.mainMenu_widget.setLayout(self.mainMenu_layout)        
+        
+        
+        # Main content
+        self.mainContent_stackedWidget = KiangStackedWidget()
+        # Children in stackedWidget
+        self.import_widget = DataLoad()
+        self.view_widget = DataWarehouse()
+        self.plot_widget = GraphMakeWidget()
+        self.setting_widget = SettingWidget()
+        # Add widget to stackedWidget
+        self.mainContent_stackedWidget.addWidget([self.import_widget, self.view_widget, 
+                                                  self.plot_widget, self.setting_widget])
+        # Add widget to layout
+        self.main_layout.addWidget([self.mainMenu_widget, self.mainContent_stackedWidget], [1, 10])
+        
+        
+        """Signal"""
+        self.import_button.clicked.connect(self.__buttonClicked)
+        self.view_button.clicked.connect(self.__buttonClicked)
+        self.plot_button.clicked.connect(self.__buttonClicked)
+        self.setting_button.clicked.connect(self.__buttonClicked)
 
-          """Widget"""
-          # Menu
-          self.mainMenu_widget = KiangMenu()
-          # Main content
-          self.mainContent_stackedWidget = KiangStackedWidget()
-          # Children in stackedWidget
-          self.dataLoad_widget = DataLoad()
-          self.dataWarehouse_widget = DataWarehouse()
-          self.graphMake_widget = GraphMakeWidget()
-          self.setting_widget = SettingWidget()
-          # Add widget to stackedWidget
-          self.mainContent_stackedWidget.addWidget([self.dataLoad_widget, self.dataWarehouse_widget, self.graphMake_widget, self.setting_widget])
-          # Add widget to layout
-          self.main_layout.addWidget([self.mainMenu_widget, self.mainContent_stackedWidget], [1, 10])
 
-          """Signal"""
-          self.mainMenu_widget.indexChanged.connect(self.mainContent_stackedWidget.setStackIndex)
+    # Button clicked event
+    """
+    When a menu tab is clicked, disable the clicked menu tab
+    """
+    def __buttonClicked(self):
 
+        buttons = self.KiangMenu_buttonGroup.buttons()
+        index = self.KiangMenu_buttonGroup.checkedId()
+        for button in buttons:
 
-# Menu
-class KiangMenu(KiangFrame):
+            button.setDisabled(True) if self.KiangMenu_buttonGroup.id(button) == index else button.setDisabled(False)
 
-     # Signal of menu index changed, control the change of the interface
-     indexChanged = QtCore.pyqtSignal(int)
-     def __init__(self, parent = None):
-
-          super(KiangMenuWidget, self).__init__("#2dd8b1")
-
-          """Layout"""
-          # Layout
-          self.KiangMenu_layout = KiangBoxLayout(0, [0, 0, 0, 0], 0)
-          
-          """Widget"""
-          # Button group
-          self.KiangMenu_buttonGroup = KiangButtonGroup()
-          # Menu button
-          self.dataLoad_button = KiangToolButton.menuToolButton("DATA", qta.icon("fa.cube", disabled = "fa.cubes",  color = "#ffffff", color_disabled ="#d82d54"))
-          self.dataWarehouse_button = KiangToolButton.menuToolButton("WAREHOUSE", qta.icon("fa.database", disabled = "fa.database",  color = "#ffffff", color_disabled ="#d82d54"))
-          self.graphMake_button = KiangToolButton.menuToolButton("GRAPH", qta.icon("fa.area-chart", color = "#ffffff", color_disabled ="#d82d54"))
-          self.setting_button = KiangToolButton.menuToolButton("SETTING", qta.icon("fa.gear", disabled = "fa.gears", color = "#ffffff", color_disabled ="#d82d54"))
-          # Add widget to button group
-          self.KiangMenu_buttonGroup.addButton([self.dataLoad_button, self.dataWarehouse_button, self.graphMake_button, self.setting_button])
-          # Add widget
-          self.KiangMenu_layout.addWidget([self.dataLoad_button, self.dataWarehouse_button, self.graphMake_button, self.setting_button])
-          # Set layout
-          self.setLayout(self.KiangMenu_layout)
-          
-          """Signal"""
-          self.dataLoad_button.clicked.connect(self.__buttonClicked)
-          self.dataWarehouse_button.clicked.connect(self.__buttonClicked)
-          self.graphMake_button.clicked.connect(self.__buttonClicked)
-          self.setting_button.clicked.connect(self.__buttonClicked)
-
-     # Button clicked event
-     """
-     When a menu tab is clicked, disable the clicked menu tab
-     """
-     def __buttonClicked(self):
-
-          buttons = self.KiangMenu_buttonGroup.buttons()
-          index = self.KiangMenu_buttonGroup.checkedId()
-          for button in buttons:
-
-               button.setDisabled(True) if self.KiangMenu_buttonGroup.id(button) == index else button.setDisabled(False)
-
-          self.indexChanged.emit(index)
+        self.mainContent_stackedWidget.setStackIndex(index)
 
          
 # File load widget
@@ -127,10 +118,10 @@ class DataLoad(KiangFrame):
           # ListWidget for selecting data load method
           self.dataLoadMethod_listWidget = KiangListWidget()
           # Children of list widget
-          self.pasteType_item = QtWidgets.QListWidgetItem(qta.icon("fa.paste", color = "#5a5e5a", color_active = "#ffffff"), "Paste")
-          self.dragdropType_item = QtWidgets.QListWidgetItem(qta.icon("fa.file", color = "#5a5e5a", color_active = "#ffffff"), "Load a file")
+          self.pasteMethod_item = QtWidgets.QListWidgetItem(qta.icon("fa.paste", color = "#5a5e5a", color_active = "#ffffff"), "Paste")
+          self.dragdropMethod_item = QtWidgets.QListWidgetItem(qta.icon("fa.file", color = "#5a5e5a", color_active = "#ffffff"), "Load a file")
           # Add children widget
-          self.dataLoadMethod_listWidget.addItem([self.pasteType_item, self.dragdropType_item])
+          self.dataLoadMethod_listWidget.addItem([self.pasteMethod_item, self.dragdropMethod_item])
           # Stackedwidget
           self.dataLoadContent_stackedWidget  = KiangStackedWidget()
           # Children of stacked widget

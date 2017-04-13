@@ -1,18 +1,19 @@
 """
-Re-write all button/buttonGroup widgets in Qt
+Re-write all button widgets in Qt
 """
 # PyQt5
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QPushButton, QRadioButton, QToolButton
 
 # PushButton
-class KiangPushButton(QtWidgets.QPushButton):
+class KiangPushButton(QPushButton):
 
     def __init__(self, cursor = QtCore.Qt.PointingHandCursor,
                  font = QtGui.QFont("Glacial Indifference", 10, QtGui.QFont.Bold),
                  text = "", icon = False,  backgroundColor = "#5a5e5a",
                  backgroundHoverColor = "#ff4430", fontColor = "#ffffff", parent = None):
 
-        QtWidgets.QPushButton.__init__(self, parent)
+        QPushButton.__init__(self, parent)
         # Stylesheet
         self.setStyleSheet("QPushButton{background: %s; border: none; border-radius: 5px; padding: 10px 20px 10px 20px; margin: 0 30px 0 30px; color: %s;} QPushButton:hover{background: %s;}" %(backgroundColor, fontColor, backgroundHoverColor))
         # Set cursor
@@ -29,13 +30,13 @@ class KiangPushButton(QtWidgets.QPushButton):
 
 
 # RadioButton
-class KiangRadioButton(QtWidgets.QRadioButton):
+class KiangRadioButton(QRadioButton):
     
     def __init__(self, checked = False, cursor = QtCore.Qt.PointingHandCursor,
                  font = QtGui.QFont("Glacial Indifference", 10, QtGui.QFont.Bold),
                  text = "", parent = None):
         
-        QtWidgets.QRadioButton.__init__(self, parent)
+        QRadioButton.__init__(self, parent)
         # Stylesheet
         # No stylesheet yet 
         # Cusor
@@ -46,15 +47,10 @@ class KiangRadioButton(QtWidgets.QRadioButton):
         self.setText(text)
         # Checked
         self.setChecked(checked)
-        # Icon
-        if icon:
-            
-            self.setIcon(icon)
-
 
 
 # ToolButton
-class KiangToolButton(QtWidgets.QToolButton):
+class KiangToolButton(QToolButton):
 
     def __init__(self, cursor = QtCore.Qt.PointingHandCursor,
                  font = QtGui.QFont("Glacial Indifference", 10, QtGui.QFont.Bold),
@@ -62,7 +58,7 @@ class KiangToolButton(QtWidgets.QToolButton):
                  checkable = True, text = "",
                  icon = False, parent = None):
 
-        QtWidgets.QToolButton.__init__(self, parent)
+        QToolButton.__init__(self, parent)
         # Stylesheet
         self.setStyleSheet("QToolButton{border: none; background: transparent; color: #ffffff} QToolButton:checked{color:#d82d54}")
         # Set cursor
@@ -91,19 +87,3 @@ class KiangToolButton(QtWidgets.QToolButton):
         return cls(font = font, text = text, icon = icon)
         
 
-
-# Button Group
-class KiangButtonGroup(QtWidgets.QButtonGroup):
-
-    def __init__(self, exclusived = True, parent = None):
-
-        QtWidgets.QButtonGroup.__init__(self, parent)
-        # Set exclusive
-        self.setExclusive(exclusived)
-
-    # Rewrite the add button method to allow add a list
-    def addButton(self, buttonList):
-
-        for index, button in enumerate(buttonList):
-
-            super(KiangButtonGroup, self).addButton(button, index)

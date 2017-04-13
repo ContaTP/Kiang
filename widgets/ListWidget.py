@@ -31,28 +31,20 @@ class KiangListWidget(QtWidgets.QListWidget):
             return
 
 
-class KiangListItem(QtWidgets.QListWidgetItem):
+class KiangListWidgetItem(QtWidgets.QListWidgetItem):
 
     def __init__(self, icon, text, font = QtGui.QFont("Glacial Indifference", 20), parent = None):
 
-        QtWidgets.QListWidgetsItem.__init__(self, parent)
-        # Stylesheet
-        self.setStyleSheet("")
-        # Cursor
-        self.setCursor(QtCore.Qt.PointingHandCursor)
-        # Focus
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        QtWidgets.QListWidgetItem.__init__(self, parent)
         # Set icon
         self.setIcon(icon)
-        # Set size
-        self.setSizeHint(size)
-        # Font size
+        # Set font
         self.setFont(font)
         
-    def setIcon(icon):
+    def setIcon(self, icon):
 
-        super(KiangListItem, self).setIcon(icon)
+        super(KiangListWidgetItem, self).setIcon(icon)
         
-    def setSizeHint(size):
+    def setSizeHint(self, size):
 
         super(KiangListItem, self).setSizeHint(size)

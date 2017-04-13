@@ -51,29 +51,37 @@ class KiangGridLayout(QtWidgets.QGridLayout):
 
     def addWidget(self, widgetList, spanList):
 
+        # If there is only one widget
         if isinstance(widgetList, QtWidgets.QWidget):
-
+            
+            # If the span factor is not set, the default start at 0, 0 and span 1, 1
             if not spanList:
 
-                row, col, rowSpan, colSpan = [1, 1, 1, 1]
+                row, col, rowSpan, colSpan = [0, 0, 1, 1]
                 
             else:
 
                 row, col, rowSpan, colSpan = spanList
                 
             super(KiangGridLayout, self).addWidget(widgetList, row, col, rowSpan, colSpan)
-
+        
+        
+        # If there are multiple widgets
         elif isinstance(widgetList, list):
 
-            # If no stretch factor is given, default are equal stretch
+            # If no stretch factor is given, default are equal stretch in a row
             if not spanList:
 
-                spanList = [[1, 1, 1, 1]] * len(widgetList)
+                for col in range(0, len(widgetList)):
+                    
+                    super(KiangGridLayout, self).addWidget(widget, 0, col, 1, 1)
+            
+            else:
+                    
+                for index, widget in enumerate(widgetList):
                 
-            for index, widget in enumerate(widgetList):
-                
-                row, col, rowSpan, colSpan = spanList[index]
-                super(KiangGridLayout, self).addWidget(widget, row, col, rowSpan, colSpan)
+                    row, col, rowSpan, colSpan = spanList[index]
+                    super(KiangGridLayout, self).addWidget(widget, row, col, rowSpan, colSpan)
 
         else:
 

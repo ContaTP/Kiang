@@ -1,8 +1,9 @@
 """
 Kiang --- A PyQt project to provide convenient access to data manipulation and plot
 """
-# PyQt5
+# PyQt5 module
 from PyQt5 import QtCore, QtGui, QtWidgets
+# Font awesome
 import qtawesome as qta
 # Python modules
 import sys
@@ -12,14 +13,18 @@ import pandas as pd
 from io import StringIO
 
 # Import widgets/function from other class
-from widgets.Button import KiangPushButton, KiangRadioButton, KiangToolButton, KiangButtonGroup
+from widgets.Button import KiangPushButton, KiangRadioButton, KiangToolButton
+from widgets.ButtonGroup import KiangButtonGroup
+from widgets.CheckBox import KiangCheckBox
 from widgets.Frame import KiangFrame
+from widgets.GroupBox import KiangGroupBox
 from widgets.Label import KiangLabel
 from widgets.Layout import KiangBoxLayout, KiangGridLayout
 from widgets.LineEdit import KiangLineEdit
-from widgets.ListWidget import KiangListWidget
+from widgets.ListWidget import KiangListWidget, KiangListWidgetItem
 from widgets.MainWindow import KiangMainWindow
 from widgets.Messager import KiangMessager
+from widgets.SpinBox import KiangSpinBox
 from widgets.Splitter import KiangSplitter
 from widgets.StackedWidget import KiangStackedWidget
 from widgets.TextEdit import KiangTextEdit
@@ -40,10 +45,12 @@ class KiangWindow(KiangMainWindow):
         
         """Layout"""
         self.main_layout =  KiangBoxLayout(2, [0, 0, 0, 0], 10)
+        # Set central widget
         super(KiangWindow, self).setCentralWidgetLayout(self.main_layout)
         
         
         """Widget"""
+        """Menu Widget"""
         # Menu
         self.mainMenu_widget = KiangFrame()
         self.mainMenu_buttonGroup = KiangButtonGroup()
@@ -62,22 +69,24 @@ class KiangWindow(KiangMainWindow):
         self.mainMenu_buttonGroup.addButton([self.import_button, self.view_button, 
                                             self.plot_button, self.setting_button])
         # Add widget to menu layout
-        self.mainMenu_layout.addWidget([self.dataLoad_button, self.dataWarehouse_button, 
-                                        self.graphMake_button, self.setting_button])
+        self.mainMenu_layout.addWidget([self.import_button, self.view_button, 
+                                        self.plot_button, self.setting_button])
         # Set layout
         self.mainMenu_widget.setLayout(self.mainMenu_layout)        
         
-        
+        """Main Content Widget"""
         # Main content
         self.mainContent_stackedWidget = KiangStackedWidget()
         # Children in stackedWidget
-        self.import_widget = DataLoad()
+        self.import_widget = ImportData()
         self.view_widget = DataWarehouse()
         self.plot_widget = GraphMakeWidget()
         self.setting_widget = SettingWidget()
         # Add widget to stackedWidget
         self.mainContent_stackedWidget.addWidget([self.import_widget, self.view_widget, 
                                                   self.plot_widget, self.setting_widget])
+        
+        
         # Add widget to layout
         self.main_layout.addWidget([self.mainMenu_widget, self.mainContent_stackedWidget], [1, 10])
         
@@ -95,337 +104,322 @@ class KiangWindow(KiangMainWindow):
     """
     def __buttonClicked(self):
 
-        buttons = self.KiangMenu_buttonGroup.buttons()
-        index = self.KiangMenu_buttonGroup.checkedId()
+        buttons = self.mainMenu_buttonGroup.buttons()
+        index = self.mainMenu_buttonGroup.checkedId()
         for button in buttons:
 
-            button.setDisabled(True) if self.KiangMenu_buttonGroup.id(button) == index else button.setDisabled(False)
+            button.setDisabled(True) if self.mainMenu_buttonGroup.id(button) == index else button.setDisabled(False)
 
         self.mainContent_stackedWidget.setStackIndex(index)
 
          
 # File load widget
-class DataLoad(KiangFrame):
+class ImportData(KiangFrame):
+
+    def __init__(self, parent = None):
+
+        super(ImportData, self).__init__()
+
+        """Layout"""
+        self.import_layout = KiangBoxLayout(0, [5, 5, 5, 5], 15)
+        
+        """Widget"""
+        # ListWidget for selecting data load method
+        self.importMethod_listWidget = KiangListWidget()
+        # Children of list widget
+        # Import method: paste, drag & drop, url (future)
+        self.paste_listItem = KiangListWidgetItem(qta.icon("fa.paste", color = "#5a5e5a", 
+                                                           color_active = "#ffffff"), "Paste")
+        self.drag_listItem = KiangListWidgetItem(qta.icon("fa.file", color = "#5a5e5a", 
+                                                          color_active = "#ffffff"), "Load a file")
+        # Children widget
+        # Listwidget of the vertical menu to choose the import method
+        self.importMethod_listWidget.addItem([self.paste_listItem, self.drag_listItem])
+        # Stackedwidget of content
+        self.importContent_stackedWidget  = KiangStackedWidget()
+        # Children of stacked widget
+        self.paste_widget = ImportPasteMethod()
+        self.drag_widget = ImportDragMethod()
+        # Add children widget
+        self.importContent_stackedWidget.addWidget([self.paste_widget, self.drag_widget])
+        # Add widget to layout
+        self.import_layout.addWidget([self.importMethod_listWidget, self.importContent_stackedWidget],  [1, 5])                                                                                 
+        # Set layout
+        self.setLayout(self.import_layout)
+        
+        """Signal"""
+        self.importMethod_listWidget.itemClicked.connect(self.__selectImportMethod)
+
+
+    """
+    When the data import method is changed, changing the layout
+    """
+    def __selectImportMethod(self, item):
+
+        # Select the corresponding widget
+        index = self.importMethod_listWidget.currentRow()
+        self.importContent_stackedWidget.setCurrentIndex(index)
+
+
+class ImportPasteMethod(KiangFrame):
 
      def __init__(self, parent = None):
 
-          super(DataLoad, self).__init__()
+        # Init
+        super(ImportPasteMethod, self).__init__()
+        
+        """Layout"""
+        # This is the layout of the load/paste interface
+        self.paste_layout = KiangGridLayout(0)
+        
+        """Widget"""
+        """Main Content Widget"""
+        # Message area
+        self.pasteMessager_widget = KiangMessager()
+        # Textedit
+        self.paste_textEdit = KiangTextEdit()
+        # Toolbox
+        self.paste_toolBox = KiangToolBox()
+        # Launch button
+        self.pasteRun_pushButton = KiangPushButton(icon = qta.icon("fa.rocket", color = "#ffffff"), 
+                                                   text = "ADD TO WAREHOUSE")
+        
+        """ToolBox Widget"""
+        """ToolBox Data Tab"""
+        # Layout
+        self.pasteData_widget = KiangFrame()
+        self.pasteData_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        """ToolBox Filename"""
+        # Filename
+        self.pasteDataFilename_label = KiangLabel("Data name")
+        self.pasteDataFilename_lineEdit = KiangLineEdit()
+        """ToolBox Delimiter"""
+        # Delimiter
+        self.pasteDataDelimiter_label = KiangLabel("Delimiter")
+        # Groupbox for delimiter
+        self.pasteDataDelimiter_groupBox =  KiangGroupBox()
+        # Groupbox layout
+        self.pasteDataDelimiterGroupBox_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        # Button group for delimiter
+        self.pasteDataDelimiter_buttonGroup = KiangButtonGroup()
+        # Delimiter: comma, semi-colon, space, tab
+        # Each button
+        self.pasteDataComma_radioButton = KiangRadioButton(text = "Comma", checked = True)
+        self.pasteDataSemiColon_radioButton = KiangRadioButton(text = "Semicolon")
+        self.pasteDataSpace_radioButton = KiangRadioButton(text = "Space")
+        self.pasteDataTab_radioButton = KiangRadioButton(text = "Tab")
+        # Add button to buttonGroup
+        self.pasteDataDelimiter_buttonGroup.addButton([self.pasteDataComma_radioButton,
+                                                       self.pasteDataSemiColon_radioButton,
+                                                       self.pasteDataSpace_radioButton,
+                                                       self.pasteDataTab_radioButton])
+        # Add button to widget layout
+        self.pasteDataDelimiterGroupBox_layout.addWidget([self.pasteDataComma_radioButton, 
+                                                          self.pasteDataSemiColon_radioButton,
+                                                          self.pasteDataSpace_radioButton, 
+                                                          self.pasteDataTab_radioButton])
+        # Set layout to button group
+        self.pasteDataDelimiter_groupBox.setLayout(self.pasteDataDelimiterGroupBox_layout)
+        """ToolBox Statistics"""
+        # Statistics
+        self.pasteDataStats_label = KiangLabel("Statistics", hidden = True)
+        # GroupBox for statistics
+        self.pasteDataStats_groupBox = KiangGroupBox(hidden = True)
+        # Groupbox layout
+        self.pasteDataStatsGroupBox_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        # Statistics label
+        self.pasteDataStatsNRow_label = KiangLabel("")
+        self.pasteDataStatsNCol_label = KiangLabel("")
+        self.pasteDataStatsMissing_label = KiangLabel("")
+        # Add label to layout
+        self.pasteDataStatsGroupBox_layout.addWidget([self.pasteDataStatsNRow_label, 
+                                                      self.pasteDataStatsNCol_label,
+                                                      self.pasteDataStatsMissing_label])
+        # Set layout to label group
+        self.pasteDataStats_groupBox.setLayout(self.pasteDataStatsGroupBox_layout)
+        # Add widgets to layout
+        self.pasteData_layout.addWidget([self.pasteDataFilename_label, self.pasteDataFilename_lineEdit,
+                                         self.pasteDataDelimiter_label, self.pasteDataDelimiter_groupBox,
+                                         self.pasteDataStats_label, self.pasteDataStats_groupBox])
+        self.pasteData_layout.addStretch(1)
+        # Set layout
+        self.pasteData_widget.setLayout(self.pasteData_layout)
+        
+        
+        """ToolBox Row Tab"""
+        # Row
+        # Layout
+        self.pasteRow_widget = KiangFrame()
+        self.pasteRow_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        """Header"""
+        # Checkbox for first row as header
+        self.pasteRowHeader_label = KiangLabel("Header")
+        self.pasteRowHeader_checkBox = KiangCheckBox(text = "First row as header", checked = True)
+        """Range"""
+        # Range
+        self.pasteRowRange_label = KiangLabel("Row Range", hidden = True)
+        self.pasteRowRange_widget = KiangFrame(hidden = True)
+        # Row range layout
+        self.pasteRowRange_layout = KiangGridLayout(0)
+        # Row range spinBox for min
+        self.pasteRowRangeMin_label =  KiangLabel("Min:")
+        self.pasteRowRangeMin_spinBox = KiangSpinBox(min = 1)
+        # Row range spinBox for max, at least 2 rows
+        self.pasteRowRangeMax_label = KiangLabel("Max:")
+        self.pasteRowRangeMax_spinBox = KiangSpinBox(min = 2)
+        # Add item to layout
+        self.pasteRowRange_layout.addWidget([self.pasteRowRangeMin_label, 
+                                             self.pasteRowRangeMin_spinBox,
+                                             self.pasteRowRangeMax_label,
+                                             self.pasteRowRangeMax_spinBox], 
+                                            [[0, 0, 1, 1], [0, 1, 1, 1], 
+                                             [1, 0, 1, 1], [1, 1, 1, 1]])
+        # Set layout
+        self.pasteRowRange_widget.setLayout(self.pasteRowRange_layout)
+        # Add widgets to layout
+        self.pasteRow_layout.addWidget([self.pasteRowHeader_label, 
+                                        self.pasteRowHeader_checkBox,
+                                        self.pasteRowRange_label, 
+                                        self.pasteRowRange_widget])
+        self.pasteRow_layout.addStretch(1)
+        # Set layout
+        self.pasteRow_widget.setLayout(self.pasteRow_layout)
 
-          """Layout"""
-          self.dataLoad_layout = KiangBoxLayout(0, [5, 5, 5, 5], 15)
 
-          """Widget"""
-          # ListWidget for selecting data load method
-          self.dataLoadMethod_listWidget = KiangListWidget()
-          # Children of list widget
-          self.pasteMethod_item = QtWidgets.QListWidgetItem(qta.icon("fa.paste", color = "#5a5e5a", color_active = "#ffffff"), "Paste")
-          self.dragdropMethod_item = QtWidgets.QListWidgetItem(qta.icon("fa.file", color = "#5a5e5a", color_active = "#ffffff"), "Load a file")
-          # Add children widget
-          self.dataLoadMethod_listWidget.addItem([self.pasteMethod_item, self.dragdropMethod_item])
-          # Stackedwidget
-          self.dataLoadContent_stackedWidget  = KiangStackedWidget()
-          # Children of stacked widget
-          self.dataLoadPaste_widget = DataLoadPasteMethod()
-          self.dataLoadDrag_widget = DataLoadDragMethod()
-          # Add children widget
-          self.dataLoadContent_stackedWidget.addWidget([self.dataLoadPaste_widget, self.dataLoadDrag_widget])
-          # Add widget to layout
-          self.dataLoad_layout.addWidget([self.dataLoadMethod_listWidget, self.dataLoadContent_stackedWidget],  [1, 5])                                                                                 
-          # Set layout
-          self.setLayout(self.dataLoad_layout)
+        """ToolBox Column Tab"""
+        # Layout
+        self.pasteCol_widget = KiangFrame()
+        self.pasteCol_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        """Index"""
+        # Checkbox for first column as index
+        self.pasteColIndex_label = KiangLabel("Index")
+        self.pasteColIndex_checkBox = KiangCheckBox(text = "First column as index", checked = False)
+        """Range"""
+        self.pasteColRange_label = KiangLabel("Column Range", hidden = True)
+        self.pasteColRange_widget = KiangFrame(hidden = True)
+        # Layout
+        self.pasteColRange_layout = KiangGridLayout(0)
+        # Widgets
+        self.pasteColRangeMin_label =  KiangLabel("Min:")
+        self.pasteColRangeMin_spinBox = KiangSpinBox(min = 1)
+        # Users can select only one variable from the data
+        self.pasteColRangeMax_label = KiangLabel("Max:")
+        self.pasteColRangeMax_spinBox = KiangSpinBox(min = 1)
+        # Add item to layout
+        self.pasteColRange_layout.addWidget([self.pasteColRangeMin_label,
+                                             self.pasteColRangeMin_spinBox,
+                                             self.pasteColRangeMax_label,
+                                             self.pasteColRangeMax_spinBox],
+                                            [[0, 0, 1, 1], [0, 1, 1, 1],
+                                             [1, 0, 1, 1], [1, 1, 1, 1]])
+        # Set layout to the widget
+        self.pasteColRange_widget.setLayout(self.pasteColRange_layout)
+        
+        # Add widgets to layout
+        self.pasteCol_layout.addWidget([self.pasteColIndex_label, self.pasteColIndex_checkBox,
+                                        self.pasteColRange_label, self.pasteCol_widget])
+        self.pasteCol_layout.addStretch(1)
+        
+        # Set layout
+        self.pasteCol_widget.setLayout(self.pasteCol_layout)
+
+
+        """ToolBox Missing Tab"""
+        self.pasteMissing_widget = KiangFrame(enabled = False)
+        # Layout
+        self.pasteMissing_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        """Delete Missing"""
+        self.pasteMissingDel_label = KiangLabel("Missing Cells")
+        # Groupbox
+        self.pasteMissingDel_groupBox = KiangGroupBox("")
+        # Layout
+        self.pasteMissingDelGroupBox_layout = KiangBoxLayout(2)
+        # ButtonGroup
+        self.pasteMissingDel_buttonGroup = KiangButtonGroup()
+        # Radiobutton
+        self.pasteMissingDel_radioButton = KiangRadioButton(text = "Delete")
+        self.pasteMissingKeep_radioButton = KiangRadioButton(text = "Keep all", checked = True)
+        self.pasteMissingKeepOnly_radioButton = KiangRadioButton(text = "Keep missing only")
+        # Add button to buttonGroup
+        self.pasteMissingDel_buttonGroup.addButton([self.pasteMissingDel_radioButton,
+                                                    self.pasteMissingKeep_radioButton,
+                                                    self.pasteMissingKeepOnly_radioButton])
+        # Add widget to layout     
+        self.pasteMissingDelGroupBox_layout.addWidget([self.pasteMissingDel_radioButton,
+                                                       self.pasteMissingKeep_radioButton,
+                                                       self.pasteMissingKeepOnly_radioButton])
+        # Set layout to groupBox
+        self.pasteMissingDel_groupBox.setLayout(self.pasteMissingDelGroupBox_layout)
+        
+        # Add widget to layout
+        self.pasteMissing_layout.addWidget([self.pasteMissingDel_label, 
+                                            self.pasteMissingDel_groupBox])
+        self.pasteMissing_layout.addStretch(1)
+        # Set layout
+        self.pasteMissing_widget.setLayout(self.pasteMissing_layout)
           
-          """Signal"""
-          self.dataLoadMethod_listWidget.itemClicked.connect(self.__selectLoadMethod)
-
-     def __selectLoadMethod(self, item):
-
-          # Select the corresponding widget
-          row = self.dataLoadMethod_listWidget.currentRow()
-          self.dataLoadContent_stackedWidget.setCurrentIndex(row)
-
-
-class DataLoadPasteMethod(KiangFrame):
-
-     def __init__(self, parent = None):
-
-          # Init
-          super(DataLoadPasteMethod, self).__init__()
-
-          """Layout"""
-          # This is the layout of the load/paste interface
-          self.dataLoadPaste_layout = KiangGridLayout(0)
-
-          """Main Widget"""
-          # Message area
-          self.dataLoadPasteMessage_widget = KiangMessager()
-          # Textedit
-          self.dataLoadPaste_textEdit = KiangTextEdit()
-          # Toolbox
-          self.dataLoadPaste_toolBox = KiangToolBox()
-          # Launch button
-          self.dataLoadPasteRun_pushButton = KiangPushButton(icon = qta.icon("fa.rocket", color = "#ffffff"), text = "ADD TO WAREHOUSE")
-
-          """ToolBox Widget"""
-          # Layout
-          self.dataLoadPasteData_widget = KiangFrame()
-          self.dataLoadPasteData_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
-          
-          # Filename
-          self.dataLoadPasteDataFilename_label = KiangLabel("Data name")
-          self.dataLoadPasteDataFilename_lineEdit = KiangLineEdit()
-
-          # Delimiter
-          self.dataLoadPasteDataDelimiter_label = KiangLabel("Delimiter")
-          # Groupbox for delimiter
-          self.dataLoadPasteDelimiter_groupBox =  KiangGroupBox()
-          # Groupbox layout
-          self.dataLoadPasteDelimiterGroupBox_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
-          # Button group for delimiter
-          self.dataLoadPasteDataDelimiter_buttonGroup = KiangButtonGroup()
-          # Each button
-          self.dataLoadPasteDataDelimiter_commaRadioButton = KiangRadioButton("Comma", checked = True)
-          self.dataLoadPasteDataDelimiter_semicolonRadioButton = KiangRadioButton("Semicolon")
-          self.dataLoadPasteDataDelimiter_spaceRadioButton = KiangRadioButton("Space")
-          self.dataLoadPasteDataDelimiter_tabRadioButton = KiangRadioButton("Tab")
-          # Add button to groupbox and  buttongroup
-          self.dataLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_commaRadioButton, 1)
-          self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_semicolonRadioButton, 1)
-          self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_spaceRadioButton, 1)
-          self.fileLoadPasteDataDelimiter_groupBoxLayout.addWidget(self.fileLoadPasteDataDelimiter_tabRadioButton, 1)
-          self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_commaRadioButton, 0)
-          self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_semicolonRadioButton, 1)
-          self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_spaceRadioButton, 2)
-          self.fileLoadPasteDataDelimiter_buttonGroup.addButton(self.fileLoadPasteDataDelimiter_tabRadioButton, 3)
-          
-          # Set layout to button group
-          self.fileLoadPasteDataDelimiter_groupBox.setLayout(self.fileLoadPasteDataDelimiter_groupBoxLayout)
-          # Statistics
-          self.fileLoadPasteDataStatistics_label = KiangLabel("Statistics")
-          self.fileLoadPasteDataStatistics_label.setHidden(True)
-          self.fileLoadPasteDataStatistics_groupBox = QtWidgets.QGroupBox("")
-          self.fileLoadPasteDataStatistics_groupBox.setStyleSheet("QGroupBox{border: none; color: #5a5e5a;} QRadioButton{color:#5a5e5a;}")
-          self.fileLoadPasteDataStatistics_groupBox.setFont(font)
-          self.fileLoadPasteDataStatistics_groupBox.setHidden(True)
-          # Groupbox layout
-          self.fileLoadPasteDataStatistics_groupBoxLayout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
-          # Statistics label
-          self.fileLoadPasteDataStatisticsNrow_label = KiangLabel("")
-          self.fileLoadPasteDataStatisticsNcol_label = KiangLabel("")
-          self.fileLoadPasteDataStatisticsMissing_label = KiangLabel("")
-          # Add label to layout
-          self.fileLoadPasteDataStatistics_groupBoxLayout.addWidget(self.fileLoadPasteDataStatisticsNrow_label, 1)
-          self.fileLoadPasteDataStatistics_groupBoxLayout.addWidget(self.fileLoadPasteDataStatisticsNcol_label, 1)
-          self.fileLoadPasteDataStatistics_groupBoxLayout.addWidget(self.fileLoadPasteDataStatisticsMissing_label, 1)
-          # Set layout to label group
-          self.fileLoadPasteDataStatistics_groupBox.setLayout(self.fileLoadPasteDataStatistics_groupBoxLayout)
-          # Add widgets to layout
-          self.fileLoadPasteData_layout.addWidget(self.fileLoadPasteDataFilename_label)
-          self.fileLoadPasteData_layout.addWidget(self.fileLoadPasteDataFilename_lineEdit)
-          self.fileLoadPasteData_layout.addWidget(self.fileLoadPasteDataDelimiter_label)
-          self.fileLoadPasteData_layout.addWidget(self.fileLoadPasteDataDelimiter_groupBox)
-          self.fileLoadPasteData_layout.addWidget(self.fileLoadPasteDataStatistics_label)
-          self.fileLoadPasteData_layout.addWidget(self.fileLoadPasteDataStatistics_groupBox)
-          self.fileLoadPasteData_layout.addStretch(1)
-          # Set layout
-          self.fileLoadPasteData_widget.setLayout(self.fileLoadPasteData_layout)
-
-          # Row
-          # Layout
-          self.fileLoadPasteRow_widget = QtWidgets.QFrame()
-          self.fileLoadPasteRow_layout = QtWidgets.QVBoxLayout()
-          # Checkbox for first row as header
-          self.fileLoadPasteRowFirstheader_label = QtWidgets.QLabel("Header")
-          self.fileLoadPasteRowFirstheader_label.setFont(font)
-          self.fileLoadPasteRowFirstheader_checkBox = QtWidgets.QCheckBox("First row as header")
-          self.fileLoadPasteRowFirstheader_checkBox.setChecked(True)
-          self.fileLoadPasteRowFirstheader_checkBox.setFont(font)
-          # Range
-          self.fileLoadPasteRowRange_label = QtWidgets.QLabel("Row Range")
-          self.fileLoadPasteRowRange_label.setFont(font)
-          self.fileLoadPasteRowRange_label.setHidden(True)
-          self.fileLoadPasteRowRange_widget = QtWidgets.QFrame()
-          self.fileLoadPasteRowRange_widget.setHidden(True)
-          # Layout
-          self.fileLoadPasteRowRange_layout = QtWidgets.QGridLayout()
-          # Widgets
-          self.fileLoadPasteRowRangeMin_label =  QtWidgets.QLabel("Min:")
-          self.fileLoadPasteRowRangeMin_label.setFont(font)
-          self.fileLoadPasteRowRangeMin_spinBox = QtWidgets.QSpinBox()
-          self.fileLoadPasteRowRangeMin_spinBox.setStyleSheet("QSpinBox{border: 1px solid #5a5e5a; border-radius: 5px;} QSpinBox::up-button{border: none;} QSpinBox::down-button{border:none}  QSpinBox::up-arrow{ image: url(./resources/images/uparrow_button.png); width: 10px; height: 10px;} QSpinBox::down-arrow{image: url(./resources/images/downarrow_button.png); width: 10px; height: 10px;}")
-          self.fileLoadPasteRowRangeMin_spinBox.setFont(font)
-          self.fileLoadPasteRowRangeMin_spinBox.setMinimum(1)
-          self.fileLoadPasteRowRangeMax_label = QtWidgets.QLabel("Max:")
-          self.fileLoadPasteRowRangeMax_label.setFont(font)
-          self.fileLoadPasteRowRangeMax_spinBox = QtWidgets.QSpinBox()
-          self.fileLoadPasteRowRangeMax_spinBox.setStyleSheet("QSpinBox{border: 1px solid #5a5e5a; border-radius: 5px;} QSpinBox::up-button{border: none;} QSpinBox::down-button{border:none} QSpinBox::up-arrow{ image: url(./resources/images/uparrow_button.png); width: 10px; height: 10px;} QSpinBox::down-arrow{image: url(./resources/images/downarrow_button.png); width: 10px; height: 10px;}")
-          self.fileLoadPasteRowRangeMax_spinBox.setFont(font)
-          """ Users need to select at least two rows in the data """
-          self.fileLoadPasteRowRangeMax_spinBox.setMinimum(2)
-          # Add item to layout
-          self.fileLoadPasteRowRange_layout.addWidget(self.fileLoadPasteRowRangeMin_label , 0, 0, 1, 1)
-          self.fileLoadPasteRowRange_layout.addWidget(self.fileLoadPasteRowRangeMin_spinBox, 0, 1, 1, 1)
-          self.fileLoadPasteRowRange_layout.addWidget(self.fileLoadPasteRowRangeMax_label , 1, 0, 1, 1)
-          self.fileLoadPasteRowRange_layout.addWidget(self.fileLoadPasteRowRangeMax_spinBox, 1, 1, 1, 1)
-          # Set layout to the widget
-          self.fileLoadPasteRowRange_widget.setLayout(self.fileLoadPasteRowRange_layout)
-          # Add widgets to layout
-          self.fileLoadPasteRow_layout.addWidget(self.fileLoadPasteRowFirstheader_label)
-          self.fileLoadPasteRow_layout.addWidget(self.fileLoadPasteRowFirstheader_checkBox)
-          self.fileLoadPasteRow_layout.addWidget(self.fileLoadPasteRowRange_label)
-          self.fileLoadPasteRow_layout.addWidget(self.fileLoadPasteRowRange_widget)
-          self.fileLoadPasteRow_layout.addStretch(1)
-          # Set layout
-          self.fileLoadPasteRow_widget.setLayout(self.fileLoadPasteRow_layout)
+        # Add item to toolBox
+        self.paste_toolBox.addItem([self.pasteData_widget,
+                                    self.pasteRow_widget,
+                                    self.pasteCol_widget,
+                                    self.pasteMissing_widget], 
+                                   [qta.icon("fa.heartbeat", color = "#5a5e5a"),
+                                    qta.icon("fa.list-ol", color = "#5a5e5a"),
+                                    qta.icon("fa.columns", color = "#5a5e5a"),
+                                    qta.icon("fa.paw", color = "#5a5e5a")], 
+                                   ["DATA", "ROW", "COL", "MISSING"])
+        
+        
+        # Add widget to layout
+        self.paste_layout.addWidget([self.pasteMessager_widget,
+                                     self.paste_textEdit,
+                                     self.paste_toolBox, 
+                                     self.pasteRun_pushButton], 
+                                    [[0, 0, 1, 6], 
+                                     [1, 0, 20, 6],
+                                     [0, 6, 20, 1],
+                                     [18, 6, 1, 1]])
+        # Set layout
+        self.setLayout(self.paste_layout)
 
 
-          # Col
-          # Layout
-          self.fileLoadPasteCol_widget = QtWidgets.QFrame()
-          self.fileLoadPasteCol_layout = QtWidgets.QVBoxLayout()
-          # Checkbox for first col as index
-          self.fileLoadPasteColFirstindex_label = QtWidgets.QLabel("Index")
-          self.fileLoadPasteColFirstindex_label.setFont(font)
-          self.fileLoadPasteColFirstindex_checkBox = QtWidgets.QCheckBox("First column as index")
-          self.fileLoadPasteColFirstindex_checkBox.setChecked(False)
-          self.fileLoadPasteColFirstindex_checkBox.setFont(font)
-          # Range
-          self.fileLoadPasteColRange_label = QtWidgets.QLabel("Column Range")
-          self.fileLoadPasteColRange_label.setFont(font)
-          self.fileLoadPasteColRange_label.setHidden(True)
-          self.fileLoadPasteColRange_widget = QtWidgets.QFrame()
-          self.fileLoadPasteColRange_widget.setHidden(True)
-          # Layout
-          self.fileLoadPasteColRange_layout = QtWidgets.QGridLayout()
-          # Widgets
-          self.fileLoadPasteColRangeMin_label =  QtWidgets.QLabel("Min:")
-          self.fileLoadPasteColRangeMin_label.setFont(font)
-          self.fileLoadPasteColRangeMin_spinBox = QtWidgets.QSpinBox()
-          self.fileLoadPasteColRangeMin_spinBox.setStyleSheet("QSpinBox{border: 1px solid #5a5e5a; border-radius: 5px;} QSpinBox::up-button{border: none;} QSpinBox::down-button{border:none}  QSpinBox::up-arrow{ image: url(./resources/images/uparrow_button.png); width: 10px; height: 10px;} QSpinBox::down-arrow{image: url(./resources/images/downarrow_button.png); width: 10px; height: 10px;}")
-          self.fileLoadPasteColRangeMin_spinBox.setFont(font)
-          self.fileLoadPasteColRangeMin_spinBox.setMinimum(1)
-          self.fileLoadPasteColRangeMax_label = QtWidgets.QLabel("Max:")
-          self.fileLoadPasteColRangeMax_label.setFont(font)
-          self.fileLoadPasteColRangeMax_spinBox = QtWidgets.QSpinBox()
-          self.fileLoadPasteColRangeMax_spinBox.setStyleSheet("QSpinBox{border: 1px solid #5a5e5a; border-radius: 5px;} QSpinBox::up-button{border: none;} QSpinBox::down-button{border:none} QSpinBox::up-arrow{ image: url(./resources/images/uparrow_button.png); width: 10px; height: 10px;} QSpinBox::down-arrow{image: url(./resources/images/downarrow_button.png); width: 10px; height: 10px;}")
-          self.fileLoadPasteColRangeMax_spinBox.setFont(font)
-          """ Users can select only one variable from the data """
-          self.fileLoadPasteColRangeMax_spinBox.setMinimum(1)
-          # Add item to layout
-          self.fileLoadPasteColRange_layout.addWidget(self.fileLoadPasteColRangeMin_label , 0, 0, 1, 1)
-          self.fileLoadPasteColRange_layout.addWidget(self.fileLoadPasteColRangeMin_spinBox, 0, 1, 1, 1)
-          self.fileLoadPasteColRange_layout.addWidget(self.fileLoadPasteColRangeMax_label , 1, 0, 1, 1)
-          self.fileLoadPasteColRange_layout.addWidget(self.fileLoadPasteColRangeMax_spinBox, 1, 1, 1, 1)
-          # Set layout to the widget
-          self.fileLoadPasteColRange_widget.setLayout(self.fileLoadPasteColRange_layout)
-          # Add widgets to layout
-          self.fileLoadPasteCol_layout.addWidget(self.fileLoadPasteColFirstindex_label)
-          self.fileLoadPasteCol_layout.addWidget(self.fileLoadPasteColFirstindex_checkBox)
-          self.fileLoadPasteCol_layout.addWidget(self.fileLoadPasteColRange_label)
-          self.fileLoadPasteCol_layout.addWidget(self.fileLoadPasteColRange_widget)
-          self.fileLoadPasteCol_layout.addStretch(1)
-          # Add widget
-          self.fileLoadPasteCol_widget.setLayout(self.fileLoadPasteCol_layout)
+        """Variable"""
+        # Shape
+        self.shape = [0, 0]
+        # Dict for delimiter
+        self.delimiter_dict = {0: ",", 1: ";", 2: " ", 3: "\t"}
+        # Default delimiter is comma
+        self.delimiter = self.delimiter_dict[0]
+        # Filename
+        self.filename = ""
+        # First row as header
+        self.firstRowHeader = True
+        # First col as index
+        self.firstColIndex = False
+        # Count of missing cells
+        self.missingCount = 0
+        # Missing value
+        self.missingDel = False
+        # Default keep all
+        self.missingDelOption = 1
 
-          # Missing
-          self.fileLoadPasteMissing_widget = QtWidgets.QFrame()
-          self.fileLoadPasteMissing_widget.setEnabled(False)
-          # Layout
-          self.fileLoadPasteMissing_layout = QtWidgets.QVBoxLayout()
-          # Label
-          self.fileLoadPasteMissingObsolete_label = QtWidgets.QLabel("Missing Cells")
-          self.fileLoadPasteMissingObsolete_label.setFont(font)
-          # Groupbox
-          self.fileLoadPasteMissingObsolete_groupBox = QtWidgets.QGroupBox("")
-          self.fileLoadPasteMissingObsolete_groupBox.setStyleSheet("QGroupBox{border: none; color: #5a5e5a;} QRadioButton{color:#5a5e5a;}")
-          self.fileLoadPasteMissingObsolete_groupBox.setFont(font)
-          # Layout
-          self.fileLoadPasteMissingObsoleteGroupBox_layout = QtWidgets.QVBoxLayout()
-          # Buttongroup
-          self.fileLoadPasteMissingObsolete_buttonGroup = QtWidgets.QButtonGroup()
-          # Radiobutton
-          self.fileLoadPasteMissingObsolete_radioButton = QtWidgets.QRadioButton("Delete")
-          self.fileLoadPasteMissingObsolete_radioButton.setFont(font)
-          self.fileLoadPasteMissingKeep_radioButton = QtWidgets.QRadioButton("Keep all")
-          self.fileLoadPasteMissingKeep_radioButton.setFont(font)
-          self.fileLoadPasteMissingKeep_radioButton.setChecked(True)
-          self.fileLoadPasteMissingKeepOnly_radioButton = QtWidgets.QRadioButton("Keep missing only")
-          self.fileLoadPasteMissingKeepOnly_radioButton.setFont(font)          
-          # Add radiobox to layout
-          self.fileLoadPasteMissingObsoleteGroupBox_layout.addWidget(self.fileLoadPasteMissingObsolete_radioButton)
-          self.fileLoadPasteMissingObsoleteGroupBox_layout.addWidget(self.fileLoadPasteMissingKeep_radioButton)
-          self.fileLoadPasteMissingObsoleteGroupBox_layout.addWidget(self.fileLoadPasteMissingKeepOnly_radioButton)
-          self.fileLoadPasteMissingObsolete_buttonGroup.addButton(self.fileLoadPasteMissingObsolete_radioButton, 0)
-          self.fileLoadPasteMissingObsolete_buttonGroup.addButton(self.fileLoadPasteMissingKeep_radioButton, 1)
-          self.fileLoadPasteMissingObsolete_buttonGroup.addButton(self.fileLoadPasteMissingKeepOnly_radioButton, 2)
-          # Set layout to groupBox
-          self.fileLoadPasteMissingObsolete_groupBox.setLayout(self.fileLoadPasteMissingObsoleteGroupBox_layout)
-          # Add item to layout
-          self.fileLoadPasteMissing_layout.addWidget(self.fileLoadPasteMissingObsolete_label)
-          self.fileLoadPasteMissing_layout.addWidget(self.fileLoadPasteMissingObsolete_groupBox)
-          self.fileLoadPasteMissing_layout.addStretch(1)
-          # Set layout
-          self.fileLoadPasteMissing_widget.setLayout(self.fileLoadPasteMissing_layout)
-          
-          # Add item to toolbox
-          self.fileLoadPaste_toolBox.addItem(self.fileLoadPasteData_widget, qta.icon("fa.heartbeat", color = "#5a5e5a"),  "DATA")
-          self.fileLoadPaste_toolBox.addItem(self.fileLoadPasteRow_widget, qta.icon("fa.list-ol", color = "#5a5e5a"), "ROWS")
-          self.fileLoadPaste_toolBox.addItem(self.fileLoadPasteCol_widget, qta.icon("fa.columns", color = "#5a5e5a"), "COLUMNS")
-          self.fileLoadPaste_toolBox.addItem(self.fileLoadPasteMissing_widget, qta.icon("fa.paw", color = "#5a5e5a"), "MISSING")
-          # Add widget to splitter
-          self.fileLoadPasteTool_layout.addWidget([self.fileLoadPaste_toolBox, self.fileLoadPasteRun_pushButton], [15, 1])
-          self.fileLoadPasteTool_widget.setLayout(self.fileLoadPasteTool_layout)
-          # Splitter
-          self.dataLoadPaste_splitter = KiangSplitter(QtCore.Qt.Horizontal)
-          self.fileLoadPaste_splitter.addWidget(self.fileLoadPaste_textEdit)
-          self.fileLoadPaste_splitter.addWidget(self.fileLoadPasteTool_widget)
-          # Stretch factor in splitter
-          self.fileLoadPaste_splitter.setStretchFactor(0, 2)
-          self.fileLoadPaste_splitter.setStretchFactor(1, 1)
-          # Add widget to layout
-          self.fileLoadPaste_layout.addWidget(self.fileLoadPaste_splitter)
-          # Set layout
-          self.setLayout(self.fileLoadPaste_layout)
-
-
-          # Variable
-          # Shape
-          self.shape = [0, 0]
-          # Dict for delimiter
-          self.dataDelimiter_dict = {0: ",", 1: ";", 2: " ", 3: "\t"}
-          # Default delimiter is comma
-          self.dataDelimiter = self.dataDelimiter_dict[0]
-          # Filename
-          self.dataFilename = ""
-          # First row as header
-          self.firstRowAsHeader = True
-          # First col as index
-          self.firstColAsIndex = False
-          # Count of missing cells
-          self.missingCount = 0
-          # Missing value
-          self.missingObsolete = False
-          # Default keep all
-          self.missingObsoleteOption = 1
-
-          """Variable"""
-          self.parent = parent
      
-          """Signal"""
-          self.fileLoadPaste_textEdit.textChanged.connect(self.getData)
-          self.fileLoadPasteDataDelimiter_tabRadioButton.toggled.connect(self.getDelimiter)
-          self.fileLoadPasteDataDelimiter_commaRadioButton.toggled.connect(self.getDelimiter)
-          self.fileLoadPasteDataDelimiter_semicolonRadioButton.toggled.connect(self.getDelimiter)
-          self.fileLoadPasteDataDelimiter_spaceRadioButton.toggled.connect(self.getDelimiter)
-          self.fileLoadPasteRowFirstheader_checkBox.toggled.connect(self.setHeader)
-          self.fileLoadPasteRowRangeMin_spinBox.valueChanged.connect(self.setRowRangeMinValue)
-          self.fileLoadPasteRowRangeMax_spinBox.valueChanged.connect(self.setRowRangeMaxValue)
-          self.fileLoadPasteColFirstindex_checkBox.toggled.connect(self.setIndex)
-          self.fileLoadPasteColRangeMin_spinBox.valueChanged.connect(self.setColRangeMinValue)
-          self.fileLoadPasteColRangeMax_spinBox.valueChanged.connect(self.setColRangeMaxValue)
-          self.fileLoadPasteMissingObsolete_radioButton.toggled.connect(self.getMissing)
-          self.fileLoadPasteMissingKeep_radioButton.toggled.connect(self.getMissing)
-          self.fileLoadPasteMissingKeepOnly_radioButton.toggled.connect(self.getMissing)
-          # self.fileLoadPasteDataFilename_lineEdit.textChanged.connect(self.getFilename)
+        """Signal"""
+        self.paste_textEdit.textChanged.connect(self.getData)
+        self.pasteDataComma_radioButton.toggled.connect(self.getDelimiter)
+        self.pasteDataSemiColon_radioButton.toggled.connect(self.getDelimiter)
+        self.pasteDataSpace.rdioButton.toggled.connect(self.getDelimiter)
+        self.pasteDataTab_radioButton.toggled.connect(self.getDelimiter)
+        self.pasteRowHeader_checkBox.toggled.connect(self.setHeader)
+        self.pasteRowRangeMin_spinBox.valueChanged.connect(self.setRowRangeMinValue)
+        self.pasteRowRangeMax_spinBox.valueChanged.connect(self.setRowRangeMaxValue)
+        self.pasteColIndex_checkBox.toggled.connect(self.setIndex)
+        self.pasteColRangeMin_spinBox.valueChanged.connect(self.setColRangeMinValue)
+        self.pasteColRangeMax_spinBox.valueChanged.connect(self.setColRangeMaxValue)
+        self.pasteMissingDel_radioButton.toggled.connect(self.getMissing)
+        self.pasteMissingKeep_radioButton.toggled.connect(self.getMissing)
+        self.pasteMissingKeepOnly_radioButton.toggled.connect(self.getMissing)
+        # self.pasteDataFilename_lineEdit.textChanged.connect(self.getFilename)
 
 
      # Obtain the delimiter from the interface
@@ -436,8 +430,8 @@ class DataLoadPasteMethod(KiangFrame):
 
                return
           
-          checked_id = self.fileLoadPasteDataDelimiter_buttonGroup.checkedId()
-          self.dataDelimiter = self.dataDelimiter_dict[checked_id]
+          checked_id = self.pasteDataDelimiter_buttonGroup.checkedId()
+          self.delimiter = self.delimiter_dict[checked_id]
           # Everytime checked a new radio button, read the data again
           self.getData()
 
@@ -445,13 +439,13 @@ class DataLoadPasteMethod(KiangFrame):
      def getData(self):
 
           # If not space delimiter, strip all the space
-          if self.dataDelimiter != " ":
+          if self.delimiter != " ":
                
-               text = self.fileLoadPaste_textEdit.toPlainText().replace(" ", "")
+               text = self.paste_textEdit.toPlainText().replace(" ", "")
 
           else:
 
-               text = self.fileLoadPaste_textEdit.toPlainText()
+               text = self.paste_textEdit.toPlainText()
 
           # If this is the first line, skipped
           if "\n" not in text:
@@ -459,25 +453,25 @@ class DataLoadPasteMethod(KiangFrame):
                return
           
           buffer = StringIO(text)
-          header = 0 if self.firstRowAsHeader else None
-          row_index = 0 if self.firstColAsIndex else False
+          header = 0 if self.firstRowHeader else None
+          row_index = 0 if self.firstColIndex else False
           try:
 
                 # Index_col is set to false as default
-                reader = pd.io.parsers.read_csv(buffer, delimiter = self.dataDelimiter, header = header, index_col = row_index)
+                reader = pd.io.parsers.read_csv(buffer, delimiter = self.delimiter, header = header, index_col = row_index)
                 msg = ""
-                self.messageSent.emit(msg, "VoidMessager")
+                self.pasteMessager_widget(msg, "VoidMessager")
 
           except pd.parser.CParserError:
 
                msg = "Cannot parse the data !"
-               self.messageSent.emit(msg, "ErrorMessager")
+               self.pasteMessager_widget.msg(msg, "ErrorMessager")
                reader = pd.DataFrame()
 
           except IndexError:
 
                msg = "Index out of range !"
-               self.messageSent.emit(msg, "ErrorMessager")
+               self.pasteMessager_widget.msg(msg, "ErrorMessager")
                reader = pd.DataFrame()
 
           # Get statistics
@@ -485,17 +479,17 @@ class DataLoadPasteMethod(KiangFrame):
           self.missingCount = reader.isnull().values.ravel().sum()
           if self.shape[0] > 1:
 
-                self.fileLoadPasteDataStatisticsNrow_label.setText("Rows:%s"% (self.shape[0]))
-                self.fileLoadPasteDataStatisticsNcol_label.setText("Cols:%s"% (self.shape[1]))
-                self.fileLoadPasteDataStatisticsMissing_label.setText("Missing cells: %s"% (self.missingCount))
-                self.showStatistics(True)
+                self.pasteDataStatsNrow_label.setText("Rows:%s"% (self.shape[0]))
+                self.pasteDataStatsNcol_label.setText("Cols:%s"% (self.shape[1]))
+                self.pasteDataStatsMissing_label.setText("Missing cells: %s"% (self.missingCount))
+                self.showStats(True)
                 self.showRowRange(True)
                 self.showColRange(True)
                 self.showMissing(self.missingCount > 0)
 
           else:
 
-               self.showStatistics(False)
+               self.showStats(False)
                self.showRowRange(False)
                self.showColRange(False)
                self.showMissing(False)
@@ -503,104 +497,103 @@ class DataLoadPasteMethod(KiangFrame):
      def getFilename(self):
 
           # Get filename and replace the space with underscore
-          filename = self.fileLoadPasteDataFilename_lineEdit.text().replace(" ", "_")
+          filename = self.pasteDataFilename_lineEdit.text().replace(" ", "_")
 
      def getMissing(self):
 
           # Get missing
-          self.missingObsoleteOption = self.fileLoadPasteMissingObsolete_buttonGroup.checkedId()
+          self.missingDelOption = self.pasteMissingDel_buttonGroup.checkedId()
           
 
      # Set the range for row min
      def setColRangeMinValue(self):
 
           # Get values 
-          minValue = int(self.fileLoadPasteColRangeMin_spinBox.value())
-          maxValue = int(self.fileLoadPasteColRangeMax_spinBox.value())
+          minValue = int(self.pasteColRangeMin_spinBox.value())
+          maxValue = int(self.pasteColRangeMax_spinBox.value())
           if maxValue < minValue:
 
-               self.fileLoadPasteColRangeMax_spinBox.setValue(minValue)
+               self.pasteColRangeMax_spinBox.setValue(minValue)
                
      # Set the range for row max
      def setColRangeMaxValue(self):
 
           # Get values 
-          minValue = int(self.fileLoadPasteColRangeMin_spinBox.value())
-          maxValue = int(self.fileLoadPasteColRangeMax_spinBox.value())
+          minValue = int(self.pasteColRangeMin_spinBox.value())
+          maxValue = int(self.pasteColRangeMax_spinBox.value())
           if maxValue < minValue:
 
-               self.fileLoadPasteColRangeMin_spinBox.setValue(maxValue)
+               self.pasteColRangeMin_spinBox.setValue(maxValue)
                
      # Set header
      def setHeader(self, toggledOn):
 
-          self.firstRowAsHeader = True if toggledOn == True else False
+          self.firstRowHeader = True if toggledOn == True else False
           self.getData()
 
      # Index
      def setIndex(self, toggledOn):
 
-          self.firstColAsIndex = True if toggledOn == True else False
+          self.firstColIndex = True if toggledOn == True else False
           self.getData()
           
      # Set the range for row min
      def setRowRangeMinValue(self):
 
           # Get values 
-          minValue = int(self.fileLoadPasteRowRangeMin_spinBox.value())
-          maxValue = int(self.fileLoadPasteRowRangeMax_spinBox.value())
+          minValue = int(self.pasteRowRangeMin_spinBox.value())
+          maxValue = int(self.pasteRowRangeMax_spinBox.value())
           if maxValue <= minValue:
 
-               self.fileLoadPasteRowRangeMax_spinBox.setValue(minValue + 1)
+               self.pasteRowRangeMax_spinBox.setValue(minValue + 1)
                
      # Set the range for row max
      def setRowRangeMaxValue(self):
 
           # Get values 
-          minValue = int(self.fileLoadPasteRowRangeMin_spinBox.value())
-          maxValue = int(self.fileLoadPasteRowRangeMax_spinBox.value())
+          minValue = int(self.pasteRowRangeMin_spinBox.value())
+          maxValue = int(self.pasteRowRangeMax_spinBox.value())
           if maxValue <= minValue:
 
-               self.fileLoadPasteRowRangeMin_spinBox.setValue(maxValue - 1)
+               self.pasteRowRangeMin_spinBox.setValue(maxValue - 1)
 
      # Functions to show the column range
      def showColRange(self, showFlag):
 
-          self.fileLoadPasteColRange_label.setVisible(showFlag)
-          self.fileLoadPasteColRange_widget.setVisible(showFlag)
+          self.pasteColRange_label.setVisible(showFlag)
+          self.pasteColRange_widget.setVisible(showFlag)
           maxAllowed = 1 if self.shape[1] == 1 else self.shape[1]
-          self.fileLoadPasteColRangeMin_spinBox.setMaximum(maxAllowed)
-          self.fileLoadPasteColRangeMax_spinBox.setMaximum(maxAllowed)
-          self.fileLoadPasteColRangeMin_spinBox.setValue(1)
-          self.fileLoadPasteColRangeMax_spinBox.setValue(maxAllowed)
+          self.pasteColRangeMin_spinBox.setMaximum(maxAllowed)
+          self.pasteColRangeMax_spinBox.setMaximum(maxAllowed)
+          self.pasteColRangeMin_spinBox.setValue(1)
+          self.pasteColRangeMax_spinBox.setValue(maxAllowed)
 
      # Funcions to show the missing data tab
      def showMissing(self, showFlag):
 
-          self.fileLoadPasteMissing_widget.setEnabled(showFlag)
+          self.pasteMissing_widget.setEnabled(showFlag)
           
      # Functions to show the statistics
-     def showStatistics(self, showFlag):
+     def showStats(self, showFlag):
 
-          self.fileLoadPasteDataStatistics_label.setVisible(showFlag)
-          self.fileLoadPasteDataStatistics_groupBox.setVisible(showFlag)
+          self.pasteDataStats_label.setVisible(showFlag)
+          self.pasteDataStats_groupBox.setVisible(showFlag)
 
 
      # Functions to show the row range
      def showRowRange(self, showFlag):
 
-          self.fileLoadPasteRowRange_label.setVisible(showFlag)
-          self.fileLoadPasteRowRange_widget.setVisible(showFlag)
+          self.pasteRowRange_label.setVisible(showFlag)
+          self.pasteRowRange_widget.setVisible(showFlag)
           maxAllowed = 2 if self.shape[0] <= 2 else self.shape[0]
-          self.fileLoadPasteRowRangeMin_spinBox.setMaximum(maxAllowed - 1)
-          self.fileLoadPasteRowRangeMax_spinBox.setMaximum(maxAllowed)
-          self.fileLoadPasteRowRangeMin_spinBox.setValue(1)
-          self.fileLoadPasteRowRangeMax_spinBox.setValue(maxAllowed)
+          self.pasteRowRangeMin_spinBox.setMaximum(maxAllowed - 1)
+          self.pasteRowRangeMax_spinBox.setMaximum(maxAllowed)
+          self.pasteRowRangeMin_spinBox.setValue(1)
+          self.pasteRowRangeMax_spinBox.setValue(maxAllowed)
                
                
 
-
-class DataLoadDragMethod(QtWidgets.QFrame):
+class ImportDragMethod(QtWidgets.QFrame):
 
      def __init__(self, parent = None):
       

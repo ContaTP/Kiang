@@ -13,25 +13,16 @@ import pandas as pd
 from io import StringIO
 
 # Import widgets/function from other class
-from widgets.Button import KiangPushButton, KiangRadioButton, KiangToolButton
-from widgets.ButtonGroup import KiangButtonGroup
-from widgets.CheckBox import KiangCheckBox
-from widgets.Frame import KiangFrame
-from widgets.GroupBox import KiangGroupBox
-from widgets.Label import KiangLabel
-from widgets.Layout import KiangBoxLayout, KiangGridLayout
-from widgets.LineEdit import KiangLineEdit
-from widgets.ListWidget import KiangListWidget, KiangListWidgetItem
-from widgets.MainWindow import KiangMainWindow
-from widgets.Messager import KiangMessager
-from widgets.SpinBox import KiangSpinBox
-from widgets.Splitter import KiangSplitter
-from widgets.StackedWidget import KiangStackedWidget
-from widgets.TextEdit import KiangTextEdit
-from widgets.ToolBox import KiangToolBox
+from widgets.Widgets import (KiangPushButton, KiangRadioButton, KiangToolButton,
+                             KiangButtonGroup, KiangCheckBox, KiangFrame, KiangGroupBox,
+                             KiangLabel, KiangBoxLayout, KiangGridLayout, KiangLineEdit,
+                             KiangListWidget, KiangListWidgetItem, KiangMainWindow,
+                             KiangSplitter, KiangSpinBox, KiangStackedWidget, KiangTextEdit, 
+                             KiangToolBox) 
 
+from widgets.Messager import KiangMessager
 # Import each module
-from Animation import TransitionWidget
+from widgets.Animation import TransitionWidget
 
 
 
@@ -44,7 +35,7 @@ class KiangWindow(KiangMainWindow):
         super(KiangWindow, self).__init__()
         
         """Layout"""
-        self.main_layout =  KiangBoxLayout(2, [0, 0, 0, 0], 10)
+        self.main_layout =  KiangBoxLayout(2, [0, 0, 0, 0], 0)
         # Set central widget
         super(KiangWindow, self).setCentralWidgetLayout(self.main_layout)
         
@@ -52,24 +43,28 @@ class KiangWindow(KiangMainWindow):
         """Widget"""
         """Menu Widget"""
         # Menu
-        self.mainMenu_widget = KiangFrame()
+        self.mainMenu_widget = KiangFrame(backgroundColor = "#4196a9")
         self.mainMenu_buttonGroup = KiangButtonGroup()
         # Menu layout
         self.mainMenu_layout = KiangBoxLayout(0, [0, 0, 0, 0], 0)        
         # Menu button
         self.import_button = KiangToolButton.menuToolButton("DATA", qta.icon("fa.cube", color = "#ffffff", 
-                                                                             color_disabled ="#d82d54", disabled = "fa.cubes"))
+                                                                             color_disabled ="#f98866", 
+                                                                             disabled = "fa.cubes"))
         self.view_button = KiangToolButton.menuToolButton("WAREHOUSE", qta.icon("fa.database", color = "#ffffff", 
-                                                                                color_disabled ="#d82d54", disabled = "fa.database"))
+                                                                                color_disabled ="#f98866", 
+                                                                                disabled = "fa.database"))
         self.plot_button = KiangToolButton.menuToolButton("GRAPH", qta.icon("fa.area-chart", color = "#ffffff", 
-                                                                            color_disabled ="#d82d54", disabled = "fa.area-chart"))
+                                                                            color_disabled ="#f98866", 
+                                                                            disabled = "fa.area-chart"))
         self.setting_button = KiangToolButton.menuToolButton("SETTING", qta.icon("fa.gear", color = "#ffffff", 
-                                                                                 color_disabled ="#d82d54", disabled = "fa.gears"))
+                                                                                 color_disabled ="#f98866", 
+                                                                                 disabled = "fa.gears"))
         # Add menu button to menu buttonGroup
         self.mainMenu_buttonGroup.addButton([self.import_button, self.view_button, 
                                             self.plot_button, self.setting_button])
         # Add widget to menu layout
-        self.mainMenu_layout.addWidget([self.import_button, self.view_button, 
+        self.mainMenu_layout.addWidgetList([self.import_button, self.view_button, 
                                         self.plot_button, self.setting_button])
         # Set layout
         self.mainMenu_widget.setLayout(self.mainMenu_layout)        
@@ -83,13 +78,13 @@ class KiangWindow(KiangMainWindow):
         self.plot_widget = GraphMakeWidget()
         self.setting_widget = SettingWidget()
         # Add widget to stackedWidget
-        self.mainContent_stackedWidget.addWidget([self.import_widget, self.view_widget, 
+        self.mainContent_stackedWidget.addWidgetList([self.import_widget, self.view_widget, 
                                                   self.plot_widget, self.setting_widget])
-        
-        
+
         # Add widget to layout
-        self.main_layout.addWidget([self.mainMenu_widget, self.mainContent_stackedWidget], [1, 10])
-        
+        self.main_layout.addWidgetList([self.mainMenu_widget, 
+                                        self.mainContent_stackedWidget], 
+                                       [1, 10])
         
         """Signal"""
         self.import_button.clicked.connect(self.__buttonClicked)
@@ -118,32 +113,37 @@ class ImportData(KiangFrame):
 
     def __init__(self, parent = None):
 
-        super(ImportData, self).__init__()
+        super(ImportData, self).__init__(backgroundColor = "#f3eed1")
 
         """Layout"""
-        self.import_layout = KiangBoxLayout(0, [5, 5, 5, 5], 15)
+        self.import_layout = KiangBoxLayout(0, [5, 5, 5, 5], 5)
         
         """Widget"""
         # ListWidget for selecting data load method
         self.importMethod_listWidget = KiangListWidget()
         # Children of list widget
         # Import method: paste, drag & drop, url (future)
-        self.paste_listItem = KiangListWidgetItem(qta.icon("fa.paste", color = "#5a5e5a", 
-                                                           color_active = "#ffffff"), "Paste")
-        self.drag_listItem = KiangListWidgetItem(qta.icon("fa.file", color = "#5a5e5a", 
-                                                          color_active = "#ffffff"), "Load a file")
+        self.paste_listItem = KiangListWidgetItem(icon = qta.icon("fa.paste", color = "#5a5e5a", 
+                                                           color_active = "#ffffff"), 
+                                                  text = "Paste")
+        self.drag_listItem = KiangListWidgetItem(icon = qta.icon("fa.file", color = "#5a5e5a", 
+                                                          color_active = "#ffffff"), 
+                                                 text ="Load a file")
         # Children widget
         # Listwidget of the vertical menu to choose the import method
-        self.importMethod_listWidget.addItem([self.paste_listItem, self.drag_listItem])
+        self.importMethod_listWidget.addItemList([self.paste_listItem, self.drag_listItem])
         # Stackedwidget of content
         self.importContent_stackedWidget  = KiangStackedWidget()
         # Children of stacked widget
         self.paste_widget = ImportPasteMethod()
         self.drag_widget = ImportDragMethod()
         # Add children widget
-        self.importContent_stackedWidget.addWidget([self.paste_widget, self.drag_widget])
+        self.importContent_stackedWidget.addWidgetList([self.paste_widget, self.drag_widget])
+        # self.importContent_stackedWidget.addWidget(self.paste_widget)
         # Add widget to layout
-        self.import_layout.addWidget([self.importMethod_listWidget, self.importContent_stackedWidget],  [1, 5])                                                                                 
+        self.import_layout.addWidgetList([self.importMethod_listWidget, 
+                                          self.importContent_stackedWidget],  
+                                         [1, 8])                                                                                 
         # Set layout
         self.setLayout(self.import_layout)
         
@@ -166,14 +166,21 @@ class ImportPasteMethod(KiangFrame):
      def __init__(self, parent = None):
 
         # Init
-        super(ImportPasteMethod, self).__init__()
+        super(ImportPasteMethod, self).__init__(backgroundColor = "#f3eed1")
         
         """Layout"""
         # This is the layout of the load/paste interface
-        self.paste_layout = KiangGridLayout(0)
+        self.paste_layout = KiangBoxLayout(0, [0, 0, 0, 0], 5)
+        self.pasteLeftPanel_layout = KiangBoxLayout(2, [5, 0, 5, 0], 5)
+        self.pasteRightPanel_layout = KiangBoxLayout(2, [10, 0, 5, 0], 10)
         
         """Widget"""
         """Main Content Widget"""
+        # Splitter
+        self.pasteSplitter_widget = KiangSplitter()
+        # Panel
+        self.pasteLeftPanel_widget = KiangFrame()
+        self.pasteRightPanel_widget = KiangFrame()
         # Message area
         self.pasteMessager_widget = KiangMessager()
         # Textedit
@@ -188,14 +195,14 @@ class ImportPasteMethod(KiangFrame):
         """ToolBox Data Tab"""
         # Layout
         self.pasteData_widget = KiangFrame()
-        self.pasteData_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        self.pasteData_layout = KiangBoxLayout(2, [0, 0, 0, 0], 5)
         """ToolBox Filename"""
         # Filename
-        self.pasteDataFilename_label = KiangLabel("Data name")
+        self.pasteDataFilename_label = KiangLabel(text = "Data name")
         self.pasteDataFilename_lineEdit = KiangLineEdit()
         """ToolBox Delimiter"""
         # Delimiter
-        self.pasteDataDelimiter_label = KiangLabel("Delimiter")
+        self.pasteDataDelimiter_label = KiangLabel(text = "Delimiter")
         # Groupbox for delimiter
         self.pasteDataDelimiter_groupBox =  KiangGroupBox()
         # Groupbox layout
@@ -214,7 +221,7 @@ class ImportPasteMethod(KiangFrame):
                                                        self.pasteDataSpace_radioButton,
                                                        self.pasteDataTab_radioButton])
         # Add button to widget layout
-        self.pasteDataDelimiterGroupBox_layout.addWidget([self.pasteDataComma_radioButton, 
+        self.pasteDataDelimiterGroupBox_layout.addWidgetList([self.pasteDataComma_radioButton, 
                                                           self.pasteDataSemiColon_radioButton,
                                                           self.pasteDataSpace_radioButton, 
                                                           self.pasteDataTab_radioButton])
@@ -222,26 +229,26 @@ class ImportPasteMethod(KiangFrame):
         self.pasteDataDelimiter_groupBox.setLayout(self.pasteDataDelimiterGroupBox_layout)
         """ToolBox Statistics"""
         # Statistics
-        self.pasteDataStats_label = KiangLabel("Statistics", hidden = True)
+        self.pasteDataStats_label = KiangLabel(text = "Statistics", hidden = True)
         # GroupBox for statistics
         self.pasteDataStats_groupBox = KiangGroupBox(hidden = True)
         # Groupbox layout
         self.pasteDataStatsGroupBox_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
         # Statistics label
-        self.pasteDataStatsNRow_label = KiangLabel("")
-        self.pasteDataStatsNCol_label = KiangLabel("")
-        self.pasteDataStatsMissing_label = KiangLabel("")
+        self.pasteDataStatsNRow_label = KiangLabel(text = "")
+        self.pasteDataStatsNCol_label = KiangLabel(text = "")
+        self.pasteDataStatsMissing_label = KiangLabel(text = "")
         # Add label to layout
-        self.pasteDataStatsGroupBox_layout.addWidget([self.pasteDataStatsNRow_label, 
+        self.pasteDataStatsGroupBox_layout.addWidgetList([self.pasteDataStatsNRow_label, 
                                                       self.pasteDataStatsNCol_label,
                                                       self.pasteDataStatsMissing_label])
         # Set layout to label group
         self.pasteDataStats_groupBox.setLayout(self.pasteDataStatsGroupBox_layout)
         # Add widgets to layout
-        self.pasteData_layout.addWidget([self.pasteDataFilename_label, self.pasteDataFilename_lineEdit,
+        self.pasteData_layout.addWidgetList([self.pasteDataFilename_label, self.pasteDataFilename_lineEdit,
                                          self.pasteDataDelimiter_label, self.pasteDataDelimiter_groupBox,
                                          self.pasteDataStats_label, self.pasteDataStats_groupBox])
-        self.pasteData_layout.addStretch(1)
+        self.pasteData_layout.addStretch(10)
         # Set layout
         self.pasteData_widget.setLayout(self.pasteData_layout)
         
@@ -250,25 +257,26 @@ class ImportPasteMethod(KiangFrame):
         # Row
         # Layout
         self.pasteRow_widget = KiangFrame()
-        self.pasteRow_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        self.pasteRow_layout = KiangBoxLayout(2, [0, 0, 0, 0], 5)
         """Header"""
         # Checkbox for first row as header
-        self.pasteRowHeader_label = KiangLabel("Header")
-        self.pasteRowHeader_checkBox = KiangCheckBox(text = "First row as header", checked = True)
+        self.pasteRowHeader_label = KiangLabel(text = "Header")
+        self.pasteRowHeader_checkBox = KiangCheckBox(text = "First row as header", 
+                                                     checked = True)
         """Range"""
         # Range
-        self.pasteRowRange_label = KiangLabel("Row Range", hidden = True)
+        self.pasteRowRange_label = KiangLabel(text = "Row Range", hidden = True)
         self.pasteRowRange_widget = KiangFrame(hidden = True)
         # Row range layout
         self.pasteRowRange_layout = KiangGridLayout(0)
         # Row range spinBox for min
-        self.pasteRowRangeMin_label =  KiangLabel("Min:")
+        self.pasteRowRangeMin_label =  KiangLabel(text = "Min:")
         self.pasteRowRangeMin_spinBox = KiangSpinBox(min = 1)
         # Row range spinBox for max, at least 2 rows
-        self.pasteRowRangeMax_label = KiangLabel("Max:")
+        self.pasteRowRangeMax_label = KiangLabel(text = "Max:")
         self.pasteRowRangeMax_spinBox = KiangSpinBox(min = 2)
         # Add item to layout
-        self.pasteRowRange_layout.addWidget([self.pasteRowRangeMin_label, 
+        self.pasteRowRange_layout.addWidgetList([self.pasteRowRangeMin_label, 
                                              self.pasteRowRangeMin_spinBox,
                                              self.pasteRowRangeMax_label,
                                              self.pasteRowRangeMax_spinBox], 
@@ -277,11 +285,11 @@ class ImportPasteMethod(KiangFrame):
         # Set layout
         self.pasteRowRange_widget.setLayout(self.pasteRowRange_layout)
         # Add widgets to layout
-        self.pasteRow_layout.addWidget([self.pasteRowHeader_label, 
+        self.pasteRow_layout.addWidgetList([self.pasteRowHeader_label, 
                                         self.pasteRowHeader_checkBox,
                                         self.pasteRowRange_label, 
                                         self.pasteRowRange_widget])
-        self.pasteRow_layout.addStretch(1)
+        self.pasteRow_layout.addStretch(10)
         # Set layout
         self.pasteRow_widget.setLayout(self.pasteRow_layout)
 
@@ -289,24 +297,24 @@ class ImportPasteMethod(KiangFrame):
         """ToolBox Column Tab"""
         # Layout
         self.pasteCol_widget = KiangFrame()
-        self.pasteCol_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        self.pasteCol_layout = KiangBoxLayout(2, [0, 0, 0, 0], 5)
         """Index"""
         # Checkbox for first column as index
-        self.pasteColIndex_label = KiangLabel("Index")
-        self.pasteColIndex_checkBox = KiangCheckBox(text = "First column as index", checked = False)
+        self.pasteColIndex_label = KiangLabel(text = "Index")
+        self.pasteColIndex_checkBox = KiangCheckBox(text = "First column as index")
         """Range"""
-        self.pasteColRange_label = KiangLabel("Column Range", hidden = True)
+        self.pasteColRange_label = KiangLabel(text = "Column Range", hidden = True)
         self.pasteColRange_widget = KiangFrame(hidden = True)
         # Layout
         self.pasteColRange_layout = KiangGridLayout(0)
         # Widgets
-        self.pasteColRangeMin_label =  KiangLabel("Min:")
+        self.pasteColRangeMin_label =  KiangLabel(text = "Min:")
         self.pasteColRangeMin_spinBox = KiangSpinBox(min = 1)
         # Users can select only one variable from the data
-        self.pasteColRangeMax_label = KiangLabel("Max:")
+        self.pasteColRangeMax_label = KiangLabel(text = "Max:")
         self.pasteColRangeMax_spinBox = KiangSpinBox(min = 1)
         # Add item to layout
-        self.pasteColRange_layout.addWidget([self.pasteColRangeMin_label,
+        self.pasteColRange_layout.addWidgetList([self.pasteColRangeMin_label,
                                              self.pasteColRangeMin_spinBox,
                                              self.pasteColRangeMax_label,
                                              self.pasteColRangeMax_spinBox],
@@ -316,9 +324,9 @@ class ImportPasteMethod(KiangFrame):
         self.pasteColRange_widget.setLayout(self.pasteColRange_layout)
         
         # Add widgets to layout
-        self.pasteCol_layout.addWidget([self.pasteColIndex_label, self.pasteColIndex_checkBox,
-                                        self.pasteColRange_label, self.pasteCol_widget])
-        self.pasteCol_layout.addStretch(1)
+        self.pasteCol_layout.addWidgetList([self.pasteColIndex_label, self.pasteColIndex_checkBox,
+                                        self.pasteColRange_label, self.pasteColRange_widget])
+        self.pasteCol_layout.addStretch(10)
         
         # Set layout
         self.pasteCol_widget.setLayout(self.pasteCol_layout)
@@ -327,11 +335,11 @@ class ImportPasteMethod(KiangFrame):
         """ToolBox Missing Tab"""
         self.pasteMissing_widget = KiangFrame(enabled = False)
         # Layout
-        self.pasteMissing_layout = KiangBoxLayout(2, [0, 0, 0, 0], 0)
+        self.pasteMissing_layout = KiangBoxLayout(2, [0, 0, 0, 0], 5)
         """Delete Missing"""
-        self.pasteMissingDel_label = KiangLabel("Missing Cells")
+        self.pasteMissingDel_label = KiangLabel(text = "Missing Cells")
         # Groupbox
-        self.pasteMissingDel_groupBox = KiangGroupBox("")
+        self.pasteMissingDel_groupBox = KiangGroupBox()
         # Layout
         self.pasteMissingDelGroupBox_layout = KiangBoxLayout(2)
         # ButtonGroup
@@ -345,43 +353,47 @@ class ImportPasteMethod(KiangFrame):
                                                     self.pasteMissingKeep_radioButton,
                                                     self.pasteMissingKeepOnly_radioButton])
         # Add widget to layout     
-        self.pasteMissingDelGroupBox_layout.addWidget([self.pasteMissingDel_radioButton,
+        self.pasteMissingDelGroupBox_layout.addWidgetList([self.pasteMissingDel_radioButton,
                                                        self.pasteMissingKeep_radioButton,
                                                        self.pasteMissingKeepOnly_radioButton])
         # Set layout to groupBox
         self.pasteMissingDel_groupBox.setLayout(self.pasteMissingDelGroupBox_layout)
         
         # Add widget to layout
-        self.pasteMissing_layout.addWidget([self.pasteMissingDel_label, 
+        self.pasteMissing_layout.addWidgetList([self.pasteMissingDel_label, 
                                             self.pasteMissingDel_groupBox])
-        self.pasteMissing_layout.addStretch(1)
+        self.pasteMissing_layout.addStretch(10)
         # Set layout
         self.pasteMissing_widget.setLayout(self.pasteMissing_layout)
           
         # Add item to toolBox
-        self.paste_toolBox.addItem([self.pasteData_widget,
-                                    self.pasteRow_widget,
-                                    self.pasteCol_widget,
-                                    self.pasteMissing_widget], 
-                                   [qta.icon("fa.heartbeat", color = "#5a5e5a"),
-                                    qta.icon("fa.list-ol", color = "#5a5e5a"),
-                                    qta.icon("fa.columns", color = "#5a5e5a"),
-                                    qta.icon("fa.paw", color = "#5a5e5a")], 
-                                   ["DATA", "ROW", "COL", "MISSING"])
+        self.paste_toolBox.addItemList([self.pasteData_widget,
+                                        self.pasteRow_widget,
+                                        self.pasteCol_widget,
+                                        self.pasteMissing_widget], 
+                                       [qta.icon("fa.heartbeat", color = "#5a5e5a"),
+                                        qta.icon("fa.list-ol", color = "#5a5e5a"),
+                                        qta.icon("fa.columns", color = "#5a5e5a"),
+                                        qta.icon("fa.paw", color = "#5a5e5a")], 
+                                       ["DATA", "ROW", "COL", "MISSING"])
         
         
         # Add widget to layout
-        self.paste_layout.addWidget([self.pasteMessager_widget,
-                                     self.paste_textEdit,
-                                     self.paste_toolBox, 
-                                     self.pasteRun_pushButton], 
-                                    [[0, 0, 1, 6], 
-                                     [1, 0, 20, 6],
-                                     [0, 6, 20, 1],
-                                     [18, 6, 1, 1]])
+        self.pasteLeftPanel_layout.addWidgetList([self.pasteMessager_widget, 
+                                                  self.paste_textEdit], [1, 20])
+        self.pasteRightPanel_layout.addWidgetList([self.paste_toolBox,
+                                                   self.pasteRun_pushButton], [10, 1])
+        # Set layout
+        self.pasteLeftPanel_widget.setLayout(self.pasteLeftPanel_layout)
+        self.pasteRightPanel_widget.setLayout(self.pasteRightPanel_layout)
+        
+        # Add widget to splitter
+        self.pasteSplitter_widget.addWidgetList([self.pasteLeftPanel_widget,
+                                                 self.pasteRightPanel_widget],
+                                                [5, 1])
+        self.paste_layout.addWidget(self.pasteSplitter_widget)
         # Set layout
         self.setLayout(self.paste_layout)
-
 
         """Variable"""
         # Shape
@@ -408,7 +420,7 @@ class ImportPasteMethod(KiangFrame):
         self.paste_textEdit.textChanged.connect(self.getData)
         self.pasteDataComma_radioButton.toggled.connect(self.getDelimiter)
         self.pasteDataSemiColon_radioButton.toggled.connect(self.getDelimiter)
-        self.pasteDataSpace.rdioButton.toggled.connect(self.getDelimiter)
+        self.pasteDataSpace_radioButton.toggled.connect(self.getDelimiter)
         self.pasteDataTab_radioButton.toggled.connect(self.getDelimiter)
         self.pasteRowHeader_checkBox.toggled.connect(self.setHeader)
         self.pasteRowRangeMin_spinBox.valueChanged.connect(self.setRowRangeMinValue)
@@ -460,7 +472,7 @@ class ImportPasteMethod(KiangFrame):
                 # Index_col is set to false as default
                 reader = pd.io.parsers.read_csv(buffer, delimiter = self.delimiter, header = header, index_col = row_index)
                 msg = ""
-                self.pasteMessager_widget(msg, "VoidMessager")
+                self.pasteMessager_widget.msg(msg, "VoidMessager")
 
           except pd.parser.CParserError:
 
@@ -479,8 +491,8 @@ class ImportPasteMethod(KiangFrame):
           self.missingCount = reader.isnull().values.ravel().sum()
           if self.shape[0] > 1:
 
-                self.pasteDataStatsNrow_label.setText("Rows:%s"% (self.shape[0]))
-                self.pasteDataStatsNcol_label.setText("Cols:%s"% (self.shape[1]))
+                self.pasteDataStatsNRow_label.setText("Rows:%s"% (self.shape[0]))
+                self.pasteDataStatsNCol_label.setText("Cols:%s"% (self.shape[1]))
                 self.pasteDataStatsMissing_label.setText("Missing cells: %s"% (self.missingCount))
                 self.showStats(True)
                 self.showRowRange(True)
@@ -589,8 +601,7 @@ class ImportPasteMethod(KiangFrame):
           self.pasteRowRangeMin_spinBox.setMaximum(maxAllowed - 1)
           self.pasteRowRangeMax_spinBox.setMaximum(maxAllowed)
           self.pasteRowRangeMin_spinBox.setValue(1)
-          self.pasteRowRangeMax_spinBox.setValue(maxAllowed)
-               
+          self.pasteRowRangeMax_spinBox.setValue(maxAllowed)              
                
 
 class ImportDragMethod(QtWidgets.QFrame):
@@ -691,7 +702,7 @@ def main():
       sys.stdout.write("The application is not supported in this system")
       pass
     # Create the application
-    app = QtWidgets.QApplication(['EasyPlot'])
+    app = QtWidgets.QApplication(['Kiang'])
     # Add icon for the application
     # Add font to the font database
     QtGui.QFontDatabase().addApplicationFont(":/resources/font/manteka.ttf")

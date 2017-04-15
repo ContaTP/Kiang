@@ -602,8 +602,8 @@ ToolBox
 class KiangToolBox(QToolBox):
 
     def __init__(self, backgroundColor = "transparent",
-                 borderColor = "#60a92c",
-                 borderSelectedColor = "#5a5e5a", 
+                 borderColor = "#4196a9",
+                 borderSelectedColor = "#60a92c", 
                  cursor = QtCore.Qt.PointingHandCursor,
                  font = QtGui.QFont("Glacial Indifference", 10, QtGui.QFont.Bold),
                  fontColor = "#5a5e5a", 
